@@ -1,11 +1,20 @@
 #include "dmabuf_util.h"
 
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <linux/dma-heap.h>
+#include <linux/dma-buf.h>
+#include <unistd.h>
+
 int dmabuf_open()
 {
     int fd;
 
-    // requires a linux,cma region defined in the device tree
-    fd = open("/dev/dma_heap/linux,cma", O_RDWR, 0);
+    // requires a CMA region defined in the device tree
+    fd = open("/dev/dma_heap/reserved", O_RDWR, 0);
 
     return fd; // fd of the dma-buf heap framework object
 }
@@ -53,9 +62,7 @@ int dmabuf_sync_start(int fd)
     sync_start.flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_RW;
 
     if(ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync_start) == 0) // fd of the buffer allocated from dma-buf heap framework
-    {
         return 0;
-    }
 
     return -1;
 }
@@ -67,9 +74,7 @@ int dmabuf_sync_end(int fd)
     sync_end.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_RW;
 
     if(ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync_end) == 0) // fd of the buffer allocated from dma-buf heap framework
-    {
         return 0;
-    }
 
     return -1;
 }

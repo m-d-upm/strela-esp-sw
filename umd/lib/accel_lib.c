@@ -1,133 +1,125 @@
 #include "accel_lib.h"
 
-int accel_lib_alloc(struct accel_shbuf_desc* desc, size_t size)
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <linux/dma-heap.h>
+#include <linux/dma-buf.h>
+#include <unistd.h>
+
+int accel_lib_buf_alloc(size_t size)
 {
-    int dmabuf_heap_fd;
+    int dmabuf_heap_fd = -1;
+    int buf_fd = -1;
 
-    if(!desc || (size == 0))
-    {
+    if (size == 0)
         return -1;
-    }
 
-    dmabuf_heap_fd = strela_dmabuf_open();
+    dmabuf_heap_fd = dmabuf_open();
 
     if(dmabuf_heap_fd < 0)
-    {
         return -1;
-    }
 
-    desc->dmabuf_fd = dmabuf_alloc(dmabuf_heap_fd, size);
-
-    if(desc->dmabuf_fd < 0)
-    {
-        goto error_buff_alloc;
-    }
-
-    desc->buff_mmap_ptr = strela_dmabuf_mmap(buffer_fd, size);
-
-    if(!desc->buff_mmap_ptr)
-    {
-        goto error_mmap;
-    }
+    buf_fd = dmabuf_alloc(dmabuf_heap_fd, size);
 
     dmabuf_close(dmabuf_heap_fd);
-    desc->buff_size = size;
+    
+    return buf_fd;
+}
 
-    return 0;
+void* accel_lib_buf_map(int buf_fd, size_t size)
+{
+    int dmabuf_heap_fd = -1;
+    void *ptr = NULL;
 
-error_mmap:
-    dmabuf_free(desc->dmabuf_fd);
-error_buff_alloc:
+    if (buf_fd < 0)
+        return NULL;
+
+    dmabuf_heap_fd = dmabuf_open();
+
+    if(dmabuf_heap_fd < 0)
+        return NULL;
+
+    ptr = dmabuf_mmap(buf_fd, size);
+
     dmabuf_close(dmabuf_heap_fd);
 
-    return -1;
+    return ptr;
 }
 
-void accel_lib_dealloc(struct accel_shbuf_desc* desc)
+void accel_lib_buf_unmap(void *buf_ptr, size_t size)
 {
-    if(!desc)
-    {
+    int dmabuf_heap_fd = -1;
+    void *ptr = NULL;
+
+    if (!buf_ptr)
         return;
-    }
 
-    if(!desc->buff_mmap_ptr)
-    {
+    dmabuf_heap_fd = dmabuf_open();
+
+    if(dmabuf_heap_fd < 0)
         return;
-    }
 
-    dmabuf_unmap(desc->buff_mmap_ptr, desc->buff_size);
+    dmabuf_unmap(buf_ptr, size);
 
-    dmabuf_free(desc->dmabuf_fd);
-
-    desc->buff_mmap_ptr = NULL;
-    desc->dmabuf_fd = -1;
-    desc->buff_size = 0;
+    dmabuf_close(dmabuf_heap_fd);
 }
 
-int accel_lib_attach_buf_to_dev(struct accel_shbuf_desc* desc, int accel_fd, enum accel_shbuf_dir direction)
+void accel_lib_buf_dealloc(int buf_fd)
 {
-    if(accel_fd < 0)
-    {
-        return -1;
-    }
+    int dmabuf_heap_fd = -1;
 
-    if(!desc)
-    {
-        return -1;
-    }
+    if (buf_fd < 0)
+        return;
 
-    if(!desc->accel_buf_attach)
-    {
-        return -1;
-    }
+    dmabuf_heap_fd = dmabuf_open();
 
-    if(desc->accel_buf_attach(accel_fd, direction) < 0)
-    {
-        return -1;
-    }
+    if(dmabuf_heap_fd < 0)
+        return;
 
-    if(direction == ACCEL_SHBUF_DIR_IN)
-    {
-        desc->accel_dev_fd_in = accel_fd;
-    }
-    else
-    {
-        desc->accel_dev_fd_out = accel_fd;
-    }
+    dmabuf_free(buf_fd);
+
+    dmabuf_close(dmabuf_heap_fd);
+}
+
+int accel_lib_attach_buf_to_dev(struct accel_attach_info *info)
+{
+    if (!info)
+        return -1;
+        
+    if(info->accel_fd < 0)
+        return -1;
+    
+    if (info->buf_fd < 0)
+        return -1;
+      
+    if (!info->accel_buf_attach)
+        return -1; 
+        
+    if(info->accel_buf_attach(info->accel_fd, info->buf_fd , info->direction) < 0)
+        return -1;
 
     return 0;
 }
 
-int accel_lib_detach_buf_from_dev(struct accel_shbuf_desc* desc, enum accel_shbuf_dir direction)
+int accel_lib_detach_buf_from_dev(struct accel_attach_info *info)
 {
-    if(!desc)
-    {
+      if (!info)
         return -1;
-    }
-
-    if(desc->accel_dev_fd == -1)
-    {
+        
+    if(info->accel_fd < 0)
         return -1;
-    }
-
-    if(!desc->accel_buf_detach)
-    {
+    
+    if (info->buf_fd < 0)
         return -1;
-    }
-
-    if(desc->accel_buf_detach(desc->accel_dev_fd, direction) < 0)
-    {
+      
+    if (!info->accel_buf_detach)
+        return -1; 
+        
+    if(info->accel_buf_detach(info->accel_fd, info->direction) < 0)
         return -1;
-    }
-
-    if(direction == ACCEL_SHBUF_DIR_IN)
-    {
-        desc->accel_dev_fd_in = -1;
-    }
-    else
-    {
-        desc->accel_dev_fd_out = -1;
-    }
 
     return 0;
 }
