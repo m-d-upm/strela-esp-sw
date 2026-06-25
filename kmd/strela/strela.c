@@ -27,6 +27,7 @@
 #include <linux/wait.h>
 #include <linux/uaccess.h>
 #include <linux/dma-buf.h>
+#include <linux/version.h>
 
 #include "strela.h"
 
@@ -482,7 +483,11 @@ fail:
 	return ret;
 };
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
+static void strela_remove(struct platform_device *pdev)
+#else
 static int strela_remove(struct platform_device *pdev)
+#endif
 {
 	struct device *dev = &pdev->dev;
 	struct strela_device *strela_dev = platform_get_drvdata(pdev);
@@ -495,7 +500,9 @@ static int strela_remove(struct platform_device *pdev)
 
 	dev_info(dev, "STRELA: Device removed\n");
 
-	return 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 11, 0)
+    return 0;
+#endif
 };
 
 static void strela_shutdown(struct platform_device *pdev)
@@ -523,7 +530,12 @@ static struct platform_driver strela_driver = {
 
 module_driver(strela_driver, platform_driver_register, platform_driver_unregister);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
+MODULE_IMPORT_NS("DMA_BUF");
+#else
 MODULE_IMPORT_NS(DMA_BUF);
+#endif
+
 MODULE_DESCRIPTION("Simple driver for the STRELA CGRA with embedded DMA module");
 MODULE_VERSION("1.0");
 MODULE_AUTHOR("Milos Dordevic <milos.dordevic@upm.es>");
