@@ -1,7 +1,7 @@
 COMPILER_SUFFIX = gcc
 CC = $(addprefix $(TOOLCHAIN_PREFIX),$(COMPILER_SUFFIX))
 
-#CFLAGS = -Os -ggdb -Wall
+CFLAGS = -march=rv64imafdc -mabi=lp64d
 
 INCLUDES = -I./ -I../common/inc/ -I../lib
 

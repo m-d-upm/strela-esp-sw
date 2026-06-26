@@ -4,7 +4,7 @@ SUBDIRS = $(wildcard */)
 
 all:
 	@for dir in $(SUBDIRS); do \
-		$(MAKE) KERNEL_SRC=$(KDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $$dir all; \
+		$(MAKE) KERNEL_SRC=$(KDIR) ARCH=$(ARCH) KCFLAGS='$(KCFLAGS)' CROSS_COMPILE=$(CROSS_COMPILE) ESP_DRIVERS=$(ESP_DRIVERS) -C $$dir all; \
 	done
 
 modules_install:

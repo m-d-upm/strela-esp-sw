@@ -31,6 +31,10 @@
 
 #include "strela.h"
 
+// ESP cache flush functions
+extern int esp_cache_flush(void);
+extern int esp_private_cache_flush(void);
+
 #define STRELA_MAX_DEV_SUPPORTED (4) // number of devices supported by this driver
 
 struct strela_reg_addr_map {
@@ -217,6 +221,8 @@ static long strela_ioctl(struct file *fp, unsigned int ioctl_num, unsigned long 
 
 	case IOCTL_STRELA_CONFIG: {
 		// TO-DO: flush data L1 cache either here or in user-space library
+		esp_private_cache_flush();
+		esp_cache_flush();
 
 		// reset STRELA CGRA and DMA
 		iowrite32(STRELA_CTRL_BIT_CLEAR_CONFIG, strela_dev->regs.strela_ctrl);
@@ -235,14 +241,14 @@ static long strela_ioctl(struct file *fp, unsigned int ioctl_num, unsigned long 
 
 	case IOCTL_STRELA_EXEC: {
 		// TO-DO: flush data L1 cache either here or in user-space library
-
+		esp_private_cache_flush();
+		esp_cache_flush();
+		
 		// start execution
 		iowrite32(STRELA_CTRL_BIT_START_EXEC, strela_dev->regs.strela_ctrl);
 
 		ret = wait_event_interruptible(strela_dev->wq_exec, strela_dev->wake_up_int_exec == true);
 		strela_dev->wake_up_int_exec = false;
-
-		// TO-DO: flush data L1 cache either here or in user-space library
 
 		break;
 	}
