@@ -15,17 +15,29 @@
 // https://man7.org/linux/man-pages/man2/clock_gettime.2.html
 // https://stackoverflow.com/questions/7506952/understanding-the-different-clocks-of-clock-gettime
 
- #define CLOCK_GETTIME_CLOCK_ID CLOCK_MONOTONIC_RAW
+#define CLOCK_GETTIME_CLOCK_ID CLOCK_MONOTONIC_RAW
 //#define CLOCK_GETTIME_CLOCK_ID CLOCK_PROCESS_CPUTIME_ID
+//#define CLOCK_GETTIME_CLOCK_ID CLOCK_MONOTONIC
 
-void examine_mem(uint32_t *ptr, uint32_t offset, uint32_t size)
+void examine_mem(void *buf_ptr, uint32_t offset, uint32_t size)
 {
-    for (int i = 0; i < size; i += 2)
+    uint8_t *ptr = (uint8_t *)buf_ptr;
+
+    for (uint32_t i = 0; i < size; i += 2)
     {
-        printf("%08x: %08x %08x\n", offset + i * 4, *(ptr + offset + i), *(ptr + offset + i + 1));
+        printf("\r%08x: ", offset + i);
+
+        printf("%02x ", *(ptr + offset + i));
+
+        if (i + 1 < size) {
+            printf("%02x\n", *(ptr + offset + i + 1));
+        } else {
+            printf("--\n");
+        }
         
-        if((i / 8 + 1) % 4 == 0)
-            printf("\n");
+        if (((i / 2) + 1) % 4 == 0) {
+            printf("\r\n");
+        }
     }
 }
 
@@ -45,9 +57,9 @@ int validate_buffers(void *buf, void *gold, uint32_t size)
     }
 
     if(differences_counter)
-        printf("Buffer validation reported %d bytes differ...\n", differences_counter);
+        printf("Buffer validation reported %d bytes differ...\r\n", differences_counter);
     else
-        printf("Buffers validated successfully, no differences...\n");
+        printf("Buffers validated successfully, no differences...\r\n");
 
     return differences_counter;
 }
