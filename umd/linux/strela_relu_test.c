@@ -23,53 +23,43 @@
 
 #include "relu.h"
 
-typedef int32_t strela_data_t;
+typedef int64_t strela_data_t;
 
 #define DEV_NAME "/dev/strela0"
 
 #define EXAMINE_MEM_ELEMENTS (40)
 
-#define TRANSFER_SIZE (1024) // 4 KB
-//#define TRANSFER_SIZE (2048) // 8 KB
-//#define TRANSFER_SIZE (4096) // 16 KB
-//#define TRANSFER_SIZE (8192) // 32 KB
-//#define TRANSFER_SIZE (16384) // 64 KB
-//#define TRANSFER_SIZE (32768) // 128 KB
-//#define TRANSFER_SIZE (65536) // 256 KB
-//#define TRANSFER_SIZE (131072) // 512 KB
-//#define TRANSFER_SIZE (262144) // 1 MB
-
-//#define TRANSFER_SIZE (80) // B
+#define TRANSFER_SIZE (1024)
 
 static strela_data_t input_data_sw[TRANSFER_SIZE];
 static strela_data_t output_data_sw[TRANSFER_SIZE];
 
 #define RELU_KRNL_NPE (16)
-#define RELU_KRNL_SIZE (RELU_KRNL_NPE * 5)
+#define RELU_KRNL_SIZE (RELU_KRNL_NPE * 6)
 #define RELU_KRNL_BYTES (RELU_KRNL_SIZE * sizeof(uint32_t))
 
 //#define RELU_KRNL_BYTES (4096)
 
 static uint32_t RELU_kernel[RELU_KRNL_SIZE] = {
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
-    0x00004083, 0x20CC0300, 0x000000A0, 0x00000000, 0x00000000, // 4
-    0x00000241, 0x020C0300, 0x00000099, 0x00000000, 0x00000000, // 0
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
+    0x00000000, 0x00004083, 0x20CC0300, 0x000000A0, 0x00000000, 0x00000000, // 4
+    0x00000000, 0x00000241, 0x020C0300, 0x00000099, 0x00000000, 0x00000000, // 0
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
-    0x00000011, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 5
-    0x00400008, 0x00000200, 0x00000000, 0x00000000, 0x00000000, // 1
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
+    0x00000000, 0x00000011, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 5
+    0x00000000, 0x00400008, 0x00000200, 0x00000000, 0x00000000, 0x00000000, // 1
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 6
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 2
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 6
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 2
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
 };
 
 static int strela_attach(int accel_fd, int buf_fd, enum accel_shbuf_dir direction)
@@ -80,7 +70,7 @@ static int strela_attach(int accel_fd, int buf_fd, enum accel_shbuf_dir directio
 
     if (ioctl(accel_fd, cmd, &buf_fd) != 0)
     {
-        printf("ERROR: Couldn't attach buffer to the device!\n");
+        printf("ERROR: Couldn't attach buffer to the device!\r\n");
         return -1;
     }
 
@@ -95,7 +85,7 @@ static int strela_detach(int accel_fd, enum accel_shbuf_dir direction)
 
     if (ioctl(accel_fd, cmd) != 0)
     {
-        printf("ERROR: Couldn't detach buffer from the device!\n");
+        printf("ERROR: Couldn't detach buffer from the device!\r\n");
         return -1;
     }
 
@@ -119,16 +109,16 @@ void relu_test()
     file_desc_strela = open(DEV_NAME, O_RDWR);
 
     if (file_desc_strela < 0) {
-        printf("Can't open device file: %s, error:%d\n", DEV_NAME, file_desc_strela);
+        printf("Can't open device file: %s, error:%d\r\n", DEV_NAME, file_desc_strela);
         goto error;
     }
 
-    printf("%u 32-bit elements to process ---------\n", TRANSFER_SIZE);
+    printf("%u elements to process ---------\r\n", TRANSFER_SIZE);
 
     file_desc_buf_in = accel_lib_buf_alloc(TRANSFER_SIZE * sizeof(strela_data_t));
 
     if (file_desc_buf_in < 0) {
-        printf("Can't allocate input dmabuf\n");
+        printf("Can't allocate input dmabuf\r\n");
 
         goto error_alloc_buf_in;
     }
@@ -136,7 +126,7 @@ void relu_test()
     file_desc_buf_out = accel_lib_buf_alloc(TRANSFER_SIZE * sizeof(strela_data_t));
 
     if (file_desc_buf_out < 0) {
-        printf("Can't allocate output dmabuf\n");
+        printf("Can't allocate output dmabuf\r\n");
 
         goto error_alloc_buf_out;
     }
@@ -144,7 +134,7 @@ void relu_test()
     file_desc_buf_conf = accel_lib_buf_alloc(RELU_KRNL_BYTES);
 
     if (file_desc_buf_conf < 0) {
-        printf("Can't allocate config dmabuf\n");
+        printf("Can't allocate config dmabuf\r\n");
 
         goto error_alloc_buf_conf;
     }
@@ -170,15 +160,11 @@ void relu_test()
         goto error_mmap_conf;
     }
 
-    dmabuf_sync_start(file_desc_buf_in);
-
     // Populate input data
     for(int i = 0; i < TRANSFER_SIZE; i++)
     {
         input[i] = i % 2 ? i : -i;
     }
-
-    dmabuf_sync_end(file_desc_buf_in);
 
     for(int i = 0; i < TRANSFER_SIZE; i++)
     {
@@ -186,9 +172,7 @@ void relu_test()
     }
 
     // Read input data before write (test cache flushing)
-    printf("OUTPUT before (first %d 32-bit elements):\n", EXAMINE_MEM_ELEMENTS);
-
-    dmabuf_sync_start(file_desc_buf_out);
+    printf("OUTPUT before (first several elements):\r\n");
 
     for(int i = 0; i < 20; i++)
     {
@@ -197,25 +181,20 @@ void relu_test()
 
     examine_mem(result, 0, EXAMINE_MEM_ELEMENTS);
 
-    dmabuf_sync_end(file_desc_buf_out);
-
     // Copy config to buffer
     uint32_t *cgra_kernel = RELU_kernel;
     uint32_t cgra_kernel_size_bytes = RELU_KRNL_BYTES;
 
-    printf("Copying config...\n");
+    printf("Copying config...\r\n");
 
     uint64_t begin_write_config = micros();
 
-    dmabuf_sync_start(file_desc_buf_conf);
 
     memcpy(conf, cgra_kernel, cgra_kernel_size_bytes);
 
-    dmabuf_sync_end(file_desc_buf_conf);
-
     uint64_t end_write_config = micros();
 
-    printf("Setting up config transfer...\n");
+    printf("Setting up config transfer...\r\n");
 
     uint64_t begin_cfg_setup_transf = micros();
 
@@ -236,7 +215,7 @@ void relu_test()
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_CONTROL, &cgra_ctrl) != 0)
     {
-        printf("ERROR: Setting up config transfer!\n");
+        printf("ERROR: Setting up config transfer!\r\n");
         goto error_strela_ioctl_conf;
     }
 
@@ -244,19 +223,19 @@ void relu_test()
 
     // Configure
 
-    printf("Transfering config to the device...\n");
+    printf("Transfering config to the device...\r\n");
 
     uint64_t begin_cgra_config = micros();
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_CONFIG) != 0)
     {
-        printf("ERROR: Transfering config to the device!\n");
+        printf("ERROR: Transfering config to the device!\r\n");
         goto error_strela_ioctl_conf;
     }
 
     uint64_t end_cgra_config = micros();
 
-    printf("Setting up transfer...\n");
+    printf("Setting up transfer...\r\n");
 
     uint64_t begin_setup_transf = micros();
 
@@ -286,26 +265,26 @@ void relu_test()
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_CONTROL, &cgra_ctrl) != 0)
     {
-        printf("ERROR: Setting up transfer!\n");
+        printf("ERROR: Setting up transfer!\r\n");
         goto error_strela_ioctl;
     }
 
     uint64_t end_setup_transf = micros();
 
     // Execute
-    printf("Executing...\n");
+    printf("Executing...\r\n");
 
     uint64_t begin_cgra_exec = micros();
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_EXEC) != 0)
     {
-        printf("ERROR: Timeout while executing!\n");
+        printf("ERROR: Timeout while executing!\r\n");
         goto error_strela_ioctl;
     }
 
     uint64_t end_cgra_exec = micros();
 
-    printf("Running pure software implementation (without using the accelerator)...\n");
+    printf("Running pure software implementation (without using the accelerator)...\r\n");
 
     uint64_t begin_sw = micros();
 
@@ -316,55 +295,47 @@ void relu_test()
 
     uint64_t end_sw = micros();
 
-    dmabuf_sync_start(file_desc_buf_in);
-
-    printf("Input (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Input (first several elements) -----------\r\n");
     examine_mem(input, 0, EXAMINE_MEM_ELEMENTS);
 
-    dmabuf_sync_end(file_desc_buf_in);
-
-    dmabuf_sync_start(file_desc_buf_out);
-
-    printf("Output CGRA (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Output CGRA (first several elements) -----------\r\n");
     examine_mem(result, 0, EXAMINE_MEM_ELEMENTS);
 
-    dmabuf_sync_end(file_desc_buf_out);
-
-    printf("Output SW (CPU) (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Output SW (CPU) (first several elements) -----------\r\n");
     examine_mem(output_data_sw, 0, EXAMINE_MEM_ELEMENTS);
 
     unsigned total_cgra = 0;
     unsigned delta_cycles;
 
     delta_cycles = end_write_config - begin_write_config;
-    printf("Write config (us): %u\n", delta_cycles);
+    printf("Write config (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_cfg_setup_transf - begin_cfg_setup_transf;
-    printf("Setup config transfer (us): %u\n", delta_cycles);
+    printf("Setup config transfer (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_cgra_config - begin_cgra_config;
-    printf("Config (us): %u\n", delta_cycles);
+    printf("Config (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_setup_transf - begin_setup_transf;
-    printf("Setup transfer (us): %u\n", delta_cycles);
+    printf("Setup transfer (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_cgra_exec - begin_cgra_exec;
-    printf("Execute (us): %u\n", delta_cycles);
+    printf("Execute (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
-    printf("Total CGRA (us): %u\n", total_cgra);
+    printf("Total CGRA (us): %u\r\n", total_cgra);
 
     delta_cycles = end_sw - begin_sw;
-    printf("CPU (us): %u\n", delta_cycles);
+    printf("CPU (us): %u\r\n", delta_cycles);
 
     uint64_t a, b;
     a = micros();
     b = micros();
-    printf("Min (us): %llu\n", b - a);
+    printf("Min (us): %llu\r\n", b - a);
 
     validate_buffers(result, output_data_sw, TRANSFER_SIZE * sizeof(strela_data_t));
 

@@ -24,7 +24,7 @@
 
 #define USE_TWO_DOT_PROD_PAR_KERNEL (1)
 
-typedef int32_t strela_data_t;
+typedef int64_t strela_data_t;
 
 #define DEV_NAME "/dev/strela0"
 
@@ -38,51 +38,51 @@ static strela_data_t input_data_matrix_sw_B[MATRIX_SIZE];
 static strela_data_t output_data_matrix_sw[MATRIX_SIZE];
 
 #define MAT_MUL_KRNL_NPE (16)
-#define MAT_MUL_KRNL_SIZE (MAT_MUL_KRNL_NPE * 5)
+#define MAT_MUL_KRNL_SIZE (MAT_MUL_KRNL_NPE * 6)
 #define MAT_MUL_KRNL_BYTES (MAT_MUL_KRNL_SIZE * sizeof(uint32_t))
 
 static uint32_t mat_mul_kernel[MAT_MUL_KRNL_SIZE] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 4
-    0x00000041, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 0
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 4
+    0x00000000, 0x00000041, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 0
 
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
-    0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 5
-    0x04000209, 0x018C0300, 0x00000082, 0x00000000, 0x00000000, // 1
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
+    0x00000000, 0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 5
+    0x00000000, 0x04000209, 0x018C0300, 0x00000082, 0x00000000, 0x00000000, // 1
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 6
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 2
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 6
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 2
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
 };
 
 static uint32_t mat_mul_kernel_dot2[MAT_MUL_KRNL_SIZE] = { // can do two dot products in parallel
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 4
-    0x00000041, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 0
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 8
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 4
+    0x00000000, 0x00000041, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 0
 
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
-    0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 5
-    0x04000209, 0x018C0300, 0x00000082, 0x00000000, 0x00000000, // 1
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 13
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 9
+    0x00000000, 0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 5
+    0x00000000, 0x04000209, 0x018C0300, 0x00000082, 0x00000000, 0x00000000, // 1
 
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
-    0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
-    0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 6
-    0x00004203, 0x008C0300, 0x00000082, 0x00000000, 0x00000000, // 2
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 14
+    0x00000000, 0x00000021, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 10
+    0x00000000, 0x00000201, 0xC0040400, 0x000A0080, 0x00000000, 0x00000000, // 6
+    0x00000000, 0x00004203, 0x008C0300, 0x00000082, 0x00000000, 0x00000000, // 2
 
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
-    0x00000011, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 15
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 11
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, // 7
+    0x00000000, 0x00000011, 0x00000000, 0x00000000, 0x00000000, 0x00000000 // 3
 };
 
 static int strela_attach(int accel_fd, int buf_fd, enum accel_shbuf_dir direction)
@@ -93,7 +93,7 @@ static int strela_attach(int accel_fd, int buf_fd, enum accel_shbuf_dir directio
 
     if (ioctl(accel_fd, cmd, &buf_fd) != 0)
     {
-        printf("ERROR: Couldn't attach buffer to the device!\n");
+        printf("ERROR: Couldn't attach buffer to the device!\r\n");
         return -1;
     }
 
@@ -108,7 +108,7 @@ static int strela_detach(int accel_fd, enum accel_shbuf_dir direction)
 
     if (ioctl(accel_fd, cmd) != 0)
     {
-        printf("ERROR: Couldn't detach buffer from the device!\n");
+        printf("ERROR: Couldn't detach buffer from the device!\r\n");
         return -1;
     }
 
@@ -132,16 +132,16 @@ void mat_mul_test()
     file_desc_strela = open(DEV_NAME, O_RDWR);
 
     if (file_desc_strela < 0) {
-        printf("Can't open device file: %s, error:%d\n", DEV_NAME, file_desc_strela);
+        printf("Can't open device file: %s, error:%d\r\n", DEV_NAME, file_desc_strela);
         goto error;
     }
 
-    printf("Product of two matrices (%u x %u) ---------\n", MATRIX_DIM, MATRIX_DIM);
+    printf("Product of two matrices (%u x %u) ---------\r\n", MATRIX_DIM, MATRIX_DIM);
 
     file_desc_buf_in = accel_lib_buf_alloc(MATRIX_SIZE * sizeof(strela_data_t) * 2);
 
     if (file_desc_buf_in < 0) {
-        printf("Can't allocate input dmabuf\n");
+        printf("Can't allocate input dmabuf\r\n");
 
         goto error_alloc_buf_in;
     }
@@ -149,7 +149,7 @@ void mat_mul_test()
     file_desc_buf_out = accel_lib_buf_alloc(MATRIX_SIZE * sizeof(strela_data_t));
 
     if (file_desc_buf_out < 0) {
-        printf("Can't allocate output matrix dmabuf\n");
+        printf("Can't allocate output matrix dmabuf\r\n");
 
         goto error_alloc_buf_out;
     }
@@ -157,7 +157,7 @@ void mat_mul_test()
     file_desc_buf_conf = accel_lib_buf_alloc(MAT_MUL_KRNL_BYTES);
 
     if (file_desc_buf_conf < 0) {
-        printf("Can't allocate config dmabuf\n");
+        printf("Can't allocate config dmabuf\r\n");
 
         goto error_alloc_buf_conf;
     }
@@ -183,8 +183,6 @@ void mat_mul_test()
         goto error_mmap_conf;
     }
 
-    dmabuf_sync_start(file_desc_buf_in);
-
     // Populate input data
     for(int i = 0; i < MATRIX_SIZE; i++)
     {
@@ -196,8 +194,6 @@ void mat_mul_test()
         input[i] = i % 2 ? i : -i;
     }
 
-    dmabuf_sync_end(file_desc_buf_in);
-
     for(int i = 0; i < MATRIX_SIZE; i++)
     {
         input_data_matrix_sw_A[i] = i % 2 ? i : -i;
@@ -205,9 +201,7 @@ void mat_mul_test()
     }
 
     // Read input data before write (test cache flushing)
-    printf("OUTPUT before (first %d 32-bit elements):\n", EXAMINE_MEM_ELEMENTS);
-
-    dmabuf_sync_start(file_desc_buf_out);
+    printf("OUTPUT before (first several elements):\r\n");
 
     for(int i = 0; i < 20; i++)
     {
@@ -215,8 +209,6 @@ void mat_mul_test()
     }
 
     examine_mem(result, 0, EXAMINE_MEM_ELEMENTS);
-
-    dmabuf_sync_end(file_desc_buf_out);
 
     // Copy config to buffer
 #if USE_TWO_DOT_PROD_PAR_KERNEL
@@ -227,19 +219,15 @@ void mat_mul_test()
 
     uint32_t cgra_kernel_size_bytes = MAT_MUL_KRNL_BYTES;
 
-    printf("Copying config...\n");
+    printf("Copying config...\r\n");
 
     uint64_t begin_write_config = micros();
 
-    dmabuf_sync_start(file_desc_buf_conf);
-
     memcpy(conf, cgra_kernel, cgra_kernel_size_bytes);
-
-    dmabuf_sync_end(file_desc_buf_conf);
 
     uint64_t end_write_config = micros();
 
-    printf("Setting up config transfer...\n");
+    printf("Setting up config transfer...\r\n");
 
     uint64_t begin_cfg_setup_transf = micros();
 
@@ -260,7 +248,7 @@ void mat_mul_test()
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_CONTROL, &cgra_ctrl) != 0)
     {
-        printf("ERROR: Setting up config transfer!\n");
+        printf("ERROR: Setting up config transfer!\r\n");
         goto error_strela_ioctl_conf;
     }
 
@@ -268,19 +256,19 @@ void mat_mul_test()
 
     // Configure
 
-    printf("Transfering config to the device...\n");
+    printf("Transfering config to the device...\r\n");
 
     uint64_t begin_cgra_config = micros();
 
     if (ioctl(file_desc_strela, IOCTL_STRELA_CONFIG) != 0)
     {
-        printf("ERROR: Transfering config to the device!\n");
+        printf("ERROR: Transfering config to the device!\r\n");
         goto error_strela_ioctl_conf;
     }
 
     uint64_t end_cgra_config = micros();
 
-    printf("Setting up transfer...\n");
+    printf("Setting up transfer...\r\n");
 
     uint64_t begin_setup_transf = micros();
 
@@ -306,7 +294,7 @@ void mat_mul_test()
     uint64_t total_cgra_exec = 0;
     uint64_t total_setup_transf = end_setup_transf - begin_setup_transf;
 
-    printf("Executing...\n");
+    printf("Executing...\r\n");
 
 #if USE_TWO_DOT_PROD_PAR_KERNEL
     for (int i = 0; i < MATRIX_DIM / 2; i++) 
@@ -353,7 +341,7 @@ void mat_mul_test()
 #endif
                 if (ioctl(file_desc_strela, IOCTL_STRELA_CONTROL, &cgra_ctrl) != 0)
                 {
-                    printf("ERROR: Setting up transfer!\n");
+                    printf("ERROR: Setting up transfer!\r\n");
                     goto error_strela_ioctl;
                 }
                 
@@ -363,7 +351,7 @@ void mat_mul_test()
 
                 if (ioctl(file_desc_strela, IOCTL_STRELA_EXEC) != 0)
                 {
-                    printf("ERROR: Timeout while executing!\n");
+                    printf("ERROR: Timeout while executing!\r\n");
                     goto error_strela_ioctl;
                 }
 
@@ -373,18 +361,18 @@ void mat_mul_test()
                 total_setup_transf += end_setup_transf_loop - begin_setup_transf_loop;
         }
 
-    printf("Running pure software implementation (without using the accelerator)...\n");
+    printf("Running pure software implementation (without using the accelerator)...\r\n");
 
-    int32_t *A = input_data_matrix_sw_A;
-    int32_t *B = input_data_matrix_sw_B;
-    int32_t *C = output_data_matrix_sw;
+    strela_data_t *A = input_data_matrix_sw_A;
+    strela_data_t *B = input_data_matrix_sw_B;
+    strela_data_t *C = output_data_matrix_sw;
 
     uint64_t begin_sw = micros();
 
     for (int i = 0; i < MATRIX_DIM; i++)
         for (int j = 0; j < MATRIX_DIM; j++)
         {   
-            int32_t sum = 0;
+            strela_data_t sum = 0;
 
             for (int k = 0; k < MATRIX_DIM; k++)
                 sum += *(A + i * MATRIX_DIM + k) * *(B + j * MATRIX_DIM + k);
@@ -394,55 +382,47 @@ void mat_mul_test()
     
     uint64_t end_sw = micros();
 
-    dmabuf_sync_start(file_desc_buf_in);
-
-    printf("Input (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Input (first several elements) -----------\r\n");
     examine_mem(input, 0, EXAMINE_MEM_ELEMENTS);
 
-    dmabuf_sync_end(file_desc_buf_in);
-
-    dmabuf_sync_start(file_desc_buf_out);
-
-    printf("Output CGRA (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Output CGRA (first several elements) -----------\r\n");
     examine_mem(result, 0, EXAMINE_MEM_ELEMENTS);
 
-    dmabuf_sync_end(file_desc_buf_out);
-
-    printf("Output SW (CPU) (first %d 32-bit elements) -----------\n", EXAMINE_MEM_ELEMENTS);
+    printf("Output SW (CPU) (first several elements) -----------\r\n");
     examine_mem(output_data_matrix_sw, 0, EXAMINE_MEM_ELEMENTS);
 
     unsigned total_cgra = 0;
     unsigned delta_cycles;
 
     delta_cycles = end_write_config - begin_write_config;
-    printf("Write config (us): %u\n", delta_cycles);
+    printf("Write config (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_cfg_setup_transf - begin_cfg_setup_transf;
-    printf("Setup config transfer (us): %u\n", delta_cycles);
+    printf("Setup config transfer (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = end_cgra_config - begin_cgra_config;
-    printf("Config (us): %u\n", delta_cycles);
+    printf("Config (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = total_setup_transf;
-    printf("Setup transfer (us): %u\n", delta_cycles);
+    printf("Setup transfer (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
     delta_cycles = total_cgra_exec;
-    printf("Execute (us): %u\n", delta_cycles);
+    printf("Execute (us): %u\r\n", delta_cycles);
     total_cgra += delta_cycles;
 
-    printf("Total CGRA (us): %u\n", total_cgra);
+    printf("Total CGRA (us): %u\r\n", total_cgra);
 
     delta_cycles = end_sw - begin_sw;
-    printf("CPU (us): %u\n", delta_cycles);
+    printf("CPU (us): %u\r\n", delta_cycles);
 
     uint64_t a, b;
     a = micros();
     b = micros();
-    printf("Min (us): %llu\n", b - a);
+    printf("Min (us): %llu\r\n", b - a);
 
     validate_buffers(result, output_data_matrix_sw, MATRIX_SIZE * sizeof(strela_data_t));
 
