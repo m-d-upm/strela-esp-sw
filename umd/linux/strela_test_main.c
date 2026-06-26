@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
     printf("Running ReLu test...\r\n");
     relu_test();
 
-    printf("Running matrix multiplication test...\r\n");
-    mat_mul_test();
+    //printf("Running matrix multiplication test...\r\n");
+    //mat_mul_test();
 
     //printf("Running a test to see if dmabuf(s) are cacheable...\r\n");
     //buffer_cacheable_test();
