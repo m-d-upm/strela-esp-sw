@@ -6,6 +6,7 @@
  */
 
 #include <linux/of_platform.h>
+#include <linux/of_device.h>
 #include <linux/bitfield.h>
 #include <linux/cdev.h>
 #include <linux/init.h>
@@ -442,10 +443,10 @@ static int strela_probe(struct platform_device *pdev)
 		goto fail;
 	}
 
-	//if (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32))) {
-	//	dev_err(dev, "STRELA: No suitable embedded DMA available\n");
-	//	goto fail;
-	//}
+	if (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32))) {
+		dev_err(dev, "STRELA: Could not set DMA mask to 32-bit\n");
+		goto fail;
+	}
 
 	// register misc device
 	ret = misc_register(&strela_dev->miscdev);
